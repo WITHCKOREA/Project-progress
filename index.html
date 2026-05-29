@@ -1,0 +1,1321 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Progress Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F3EF;
+    --surface: #FFFFFF;
+    --surface2: #EFECE7;
+    --border: #E3DED7;
+    --border-strong: #C9C3BA;
+    --text-1: #141210;
+    --text-2: #6B6560;
+    --text-3: #A8A29B;
+    --green-bg: #E2F5EE;
+    --green-border: #5DCAA5;
+    --green-text: #085041;
+    --amber-bg: #FEF3DC;
+    --amber-border: #FAC775;
+    --amber-text: #7A4A00;
+    --none-bg: #EDEAE5;
+    --none-border: #D0CBC4;
+    --none-text: #A8A29B;
+    --accent: #1D9E75;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    gap: 16px;
+  }
+
+  .topbar-left { display: flex; flex-direction: column; gap: 2px; }
+  .topbar-left .sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-3); letter-spacing: 0.3px; }
+
+  .title-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--text-1);
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 2px 6px;
+    margin: -2px -6px;
+    border-radius: 5px;
+    width: 100%;
+    min-width: 220px;
+    max-width: 480px;
+    transition: background 0.15s, box-shadow 0.15s;
+    cursor: text;
+  }
+  .title-input:hover { background: var(--surface2); }
+  .title-input:focus { background: var(--surface2); box-shadow: 0 0 0 2px var(--border-strong); }
+
+  .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .legend { display: flex; gap: 14px; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); }
+  .ldot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer; border: none; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text-2); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text-1); }
+  .btn-danger { background: transparent; border: 1px solid #F0BCBC; color: #A32D2D; }
+  .btn-danger:hover { background: #FEF0F0; }
+  .btn-solid { background: var(--text-1); color: #fff; }
+  .btn-solid:hover { background: #2e2b28; }
+  .btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  .page { max-width: 1400px; margin: 0 auto; padding: 32px 40px 60px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; box-shadow: var(--shadow); }
+  .stat-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+  .stat-val { font-size: 30px; font-weight: 700; color: var(--text-1); line-height: 1; }
+  .stat-val sup { font-size: 14px; font-weight: 400; color: var(--text-3); vertical-align: super; }
+
+  .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  .table-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .table-top-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.6px; color: var(--text-3); }
+  .overflow-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  thead th {
+    background: var(--surface2);
+    padding: 11px 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.3px;
+  }
+  thead th.col-product { text-align: left; padding-left: 24px; min-width: 230px; }
+  thead th.col-pct { min-width: 100px; }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #faf9f7; }
+
+  tbody td { padding: 10px 8px; text-align: center; vertical-align: middle; }
+  td.col-product { text-align: left; padding-left: 24px; }
+
+  .prod-idx { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-3); margin-bottom: 2px; }
+  .prod-name { font-size: 13px; font-weight: 500; color: var(--text-1); line-height: 1.35; }
+
+  td.col-pct { padding: 10px 16px; min-width: 110px; }
+  .pct-num { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-2); margin-bottom: 5px; text-align: right; }
+  .bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 5px; background: var(--accent); border-radius: 3px; transition: width 0.35s ease; }
+
+  /* Stage cell: button on top, date input below */
+  .stage-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .step-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.15s;
+    outline: none;
+    flex-shrink: 0;
+  }
+  .step-btn:hover { transform: scale(1.12); }
+  .step-btn:active { transform: scale(0.95); }
+
+  .step-btn[data-state="0"] {
+    background: var(--none-bg); border: 1.5px solid var(--none-border); color: var(--none-text); font-size: 16px;
+  }
+  .step-btn[data-state="0"]::after { content: '\2013'; }
+
+  .step-btn[data-state="1"] {
+    background: var(--amber-bg); border: 1.5px solid var(--amber-border); color: var(--amber-text); font-size: 10px;
+  }
+  .step-btn[data-state="1"]::after { content: '\25B6'; }
+
+  .step-btn[data-state="2"] {
+    background: var(--green-bg); border: 1.5px solid var(--green-border); color: var(--green-text); font-size: 14px;
+  }
+  .step-btn[data-state="2"]::after { content: '\2713'; }
+
+  /* Date input field */
+  .date-input {
+    width: 82px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-2);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 5px;
+    text-align: center;
+    outline: none;
+    transition: border 0.15s, background 0.15s;
+    cursor: text;
+  }
+  .date-input::placeholder { color: var(--text-3); font-size: 9px; }
+  .date-input:focus { border-color: var(--border-strong); background: var(--surface); }
+  .date-input:not(:placeholder-shown) { color: var(--text-1); }
+
+  /* When stage is completed, tint the date field green-ish */
+  .stage-cell.is-done .date-input {
+    background: var(--green-bg);
+    border-color: var(--green-border);
+    color: var(--green-text);
+  }
+  .stage-cell.is-prog .date-input {
+    background: var(--amber-bg);
+    border-color: var(--amber-border);
+    color: var(--amber-text);
+  }
+
+  thead th.col-remark { text-align: left; min-width: 160px; }
+  td.col-remark { text-align: left; padding: 8px 12px; }
+
+  .remark-input {
+    width: 100%;
+    min-width: 140px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: var(--text-2);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    outline: none;
+    resize: vertical;
+    min-height: 36px;
+    transition: border 0.15s, background 0.15s;
+    line-height: 1.4;
+  }
+  .remark-input::placeholder { color: var(--text-3); }
+  .remark-input:focus { border-color: var(--border-strong); background: var(--surface); color: var(--text-1); }
+
+  .sync-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.2px;
+    transition: color 0.3s;
+    white-space: nowrap;
+  }
+
+  @media print {
+    @page { size: A4 landscape; margin: 6mm 8mm; }
+    html, body {
+      background: #ffffff !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      width: 100%;
+    }
+    .topbar { position: static; border: none; box-shadow: none; padding: 8px 16px; }
+    .btn-danger, .btn-solid, .btn-ghost { display: none !important; }
+    .sync-status { display: none !important; }
+    .legend { display: none; }
+    .page { padding: 4px 0; max-width: 100%; }
+    .stats { margin-bottom: 10px; break-inside: avoid; }
+    .stat { padding: 8px 12px; }
+    .stat-val { font-size: 20px; }
+    .table-card { box-shadow: none; border: 1px solid #ddd; }
+    /* 핵심: overflow 제거해서 잘림 방지 */
+    .overflow-wrap { overflow: visible !important; width: 100%; }
+    table { width: 100%; font-size: 9px; table-layout: auto; }
+    thead th { font-size: 8px; padding: 5px 2px; white-space: normal; min-width: 0 !important; }
+    thead th.col-product { padding-left: 10px; }
+    tbody td { padding: 4px 2px; }
+    td.col-product { padding-left: 10px; }
+    .step-btn { width: 22px; height: 22px; }
+    .step-btn[data-state="0"] { font-size: 12px; }
+    .step-btn[data-state="1"] { font-size: 8px; }
+    .step-btn[data-state="2"] { font-size: 11px; }
+    .date-input { width: 54px; font-size: 8px; padding: 2px 3px; }
+    .remark-input { width: 100%; min-width: 0; font-size: 9px; background: transparent; border-color: var(--border); resize: none; min-height: 24px; }
+    .prod-name { font-size: 10px; }
+    .prod-idx { font-size: 8px; }
+    .pct-num { font-size: 9px; }
+    .bar-track { height: 3px; }
+    .bar-fill { height: 3px; }
+  }
+  @media (max-width: 800px) {
+    .topbar { padding: 16px 20px; }
+    .page { padding: 20px 16px 40px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .legend { display: none; }
+  }
+
+  /* ── Add Product Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.25); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px 32px; min-width: 340px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  }
+  .modal-title { font-weight: 600; font-size: 15px; margin-bottom: 18px; color: var(--text-1); }
+  .modal-input {
+    width: 100%; font-family: 'Outfit', sans-serif; font-size: 14px;
+    padding: 10px 12px; border: 1px solid var(--border-strong);
+    border-radius: 8px; outline: none; background: var(--surface2);
+    color: var(--text-1); transition: border 0.15s, background 0.15s;
+  }
+  .modal-input:focus { border-color: var(--accent); background: var(--surface); }
+  .modal-input::placeholder { color: var(--text-3); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: flex-end; }
+
+  /* ── Row action buttons (edit / delete) ── */
+  .btn-row-action {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-3); cursor: pointer; font-size: 12px; line-height: 1;
+    transition: all 0.15s;
+  }
+  .btn-row-delete { font-size: 14px; }
+  .btn-row-action:hover { background: var(--surface2); border-color: var(--border-strong); color: var(--text-1); }
+  .btn-row-delete:hover { background: #FEF0F0; border-color: #F0BCBC; color: #A32D2D; }
+  .prod-name-input {
+    width: 100%; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
+    color: var(--text-1); background: var(--surface); border: 1.5px solid var(--accent);
+    border-radius: 4px; padding: 2px 6px; outline: none;
+  }
+  @media print { .btn-row-action { display: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <input class="title-input" id="title-input" type="text" value="Herbea" title="Click to edit title" spellcheck="false">
+    <span class="sub" id="date-label">Last updated: May 11, 2026</span>
+  </div>
+  <div class="topbar-right">
+    <div class="legend">
+      <div class="legend-item">
+        <div class="ldot" style="background:var(--none-bg);border:1.5px solid var(--none-border)"></div>
+        Not started
+      </div>
+      <div class="legend-item">
+        <div class="ldot" style="background:var(--amber-bg);border:1.5px solid var(--amber-border)"></div>
+        In progress
+      </div>
+      <div class="legend-item">
+        <div class="ldot" style="background:var(--green-bg);border:1.5px solid var(--green-border)"></div>
+        Completed
+      </div>
+    </div>
+    <span class="sync-status" id="sync-status" style="color: rgb(93, 202, 165);">✓ Saved</span>
+    <button class="btn btn-ghost" id="btn-manual-save" onclick="manualSave()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path><polyline points="17,21 17,13 7,13 7,21"></polyline><polyline points="7,3 7,8 15,8"></polyline></svg>
+      Save
+    </button>
+    <button class="btn btn-danger" onclick="resetAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 102.13-9.36L1 10"></path></svg>
+      Reset
+    </button>
+    <button class="btn btn-ghost" onclick="exportHTML()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7,10 12,15 17,10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      Save HTML
+    </button>
+    <button class="btn btn-solid" onclick="window.print()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"></polyline><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      Print / PDF
+    </button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total Products</div><div class="stat-val" id="stat-total">10</div></div>
+    <div class="stat"><div class="stat-label">Completed Stages</div><div class="stat-val" id="stat-done">0</div></div>
+    <div class="stat"><div class="stat-label">In Progress Stages</div><div class="stat-val" id="stat-prog">5</div></div>
+    <div class="stat"><div class="stat-label">Overall Progress</div><div class="stat-val" id="stat-pct">0<sup>%</sup></div></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-top">
+      <span class="table-top-label">PRODUCT × STAGE MATRIX — click circle to cycle status · enter date below each stage</span>
+      <button class="btn btn-ghost" onclick="openAddModal()" style="font-size:12px; padding:6px 14px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add Product
+      </button>
+    </div>
+    <div class="overflow-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-product">Product</th>
+            <th class="col-pct">Progress</th>
+            <th>1st<br>Sampling</th>
+            <th>2nd<br>Sampling</th>
+            <th>3rd<br>Sampling</th>
+            <th>Nth<br>Sampling</th>
+            <th>Sample<br>Approval</th>
+            <th>Package<br>Approval</th>
+            <th>CT</th>
+            <th>PO</th>
+            <th>Production</th>
+            <th class="col-remark">Remark</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+      <tr data-pi="0">
+        <td class="col-product">
+          <div class="prod-idx">#01</div>
+          <div class="prod-name">Cleansing oil</div>
+        </td>
+        <td class="col-pct"><div class="pct-num">0%</div><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div></td>
+        
+        <td>
+          <div class="stage-cell is-prog" data-si="0">
+            <button class="step-btn" data-state="1" onclick="cycle(0,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="0" oninput="setDate(0,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell is-prog" data-si="1">
+            <button class="step-btn" data-state="1" onclick="cycle(0,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="1" oninput="setDate(0,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell is-prog" data-si="2">
+            <button class="step-btn" data-state="1" onclick="cycle(0,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="2" oninput="setDate(0,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell" data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(0,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="3" oninput="setDate(0,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell" data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(0,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="4" oninput="setDate(0,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell" data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(0,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="5" oninput="setDate(0,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell" data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(0,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="6" oninput="setDate(0,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell" data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(0,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="0" data-si="7" oninput="setDate(0,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="0" oninput="setRemark(0,this.value)" title="Remark"></textarea>
+        </td>
+      </tr>
+      <tr data-pi="1">
+        <td class="col-product">
+          <div class="prod-idx">#02</div>
+          <div class="prod-name">Gentle cleanser</div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">0%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        </td>
+        
+        <td>
+          <div class="stage-cell is-prog" data-si="0">
+            <button class="step-btn" data-state="1" onclick="cycle(1,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="0" oninput="setDate(1,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell is-prog" data-si="1">
+            <button class="step-btn" data-state="1" onclick="cycle(1,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="1" oninput="setDate(1,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="2">
+            <button class="step-btn" data-state="0" onclick="cycle(1,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="2" oninput="setDate(1,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(1,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="3" oninput="setDate(1,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(1,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="4" oninput="setDate(1,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(1,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="5" oninput="setDate(1,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(1,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="6" oninput="setDate(1,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(1,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="1" data-si="7" oninput="setDate(1,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="1" oninput="setRemark(1,this.value)" title="Remark"></textarea>
+        </td>
+      </tr>
+      <tr data-pi="2">
+        <td class="col-product">
+          <div class="prod-idx">#03</div>
+          <div class="prod-name">Balancing toner</div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">0%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        </td>
+        
+        <td>
+          <div class="stage-cell " data-si="0">
+            <button class="step-btn" data-state="0" onclick="cycle(2,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="0" oninput="setDate(2,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="1">
+            <button class="step-btn" data-state="0" onclick="cycle(2,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="1" oninput="setDate(2,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="2">
+            <button class="step-btn" data-state="0" onclick="cycle(2,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="2" oninput="setDate(2,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(2,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="3" oninput="setDate(2,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(2,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="4" oninput="setDate(2,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(2,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="5" oninput="setDate(2,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(2,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="6" oninput="setDate(2,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(2,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="2" data-si="7" oninput="setDate(2,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="2" oninput="setRemark(2,this.value)" title="Remark"></textarea>
+        </td>
+      </tr>
+      <tr data-pi="3">
+        <td class="col-product">
+          <div class="prod-idx">#04</div>
+          <div class="prod-name">Hydrating &amp; Barrier repair serum</div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">0%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        </td>
+        
+        <td>
+          <div class="stage-cell " data-si="0">
+            <button class="step-btn" data-state="0" onclick="cycle(3,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="0" oninput="setDate(3,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="1">
+            <button class="step-btn" data-state="0" onclick="cycle(3,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="1" oninput="setDate(3,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="2">
+            <button class="step-btn" data-state="0" onclick="cycle(3,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="2" oninput="setDate(3,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(3,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="3" oninput="setDate(3,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(3,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="4" oninput="setDate(3,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(3,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="5" oninput="setDate(3,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(3,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="6" oninput="setDate(3,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(3,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="3" data-si="7" oninput="setDate(3,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="3" oninput="setRemark(3,this.value)" title="Remark"></textarea>
+        </td>
+      </tr>
+      <tr data-pi="4">
+        <td class="col-product">
+          <div class="prod-idx">#05</div>
+          <div class="prod-name">Daily Moisturizing Cream</div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">0%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        </td>
+        
+        <td>
+          <div class="stage-cell " data-si="0">
+            <button class="step-btn" data-state="0" onclick="cycle(4,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="0" oninput="setDate(4,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="1">
+            <button class="step-btn" data-state="0" onclick="cycle(4,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="1" oninput="setDate(4,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="2">
+            <button class="step-btn" data-state="0" onclick="cycle(4,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="2" oninput="setDate(4,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(4,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="3" oninput="setDate(4,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(4,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="4" oninput="setDate(4,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(4,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="5" oninput="setDate(4,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(4,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="6" oninput="setDate(4,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(4,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="4" data-si="7" oninput="setDate(4,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="4" oninput="setRemark(4,this.value)" title="Remark"></textarea>
+        </td>
+      </tr>
+      <tr data-pi="5">
+        <td class="col-product">
+          <div class="prod-idx">#06</div>
+          <div class="prod-name">Sunscreen SPF50+ PA++++</div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">0%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        </td>
+        
+        <td>
+          <div class="stage-cell " data-si="0">
+            <button class="step-btn" data-state="0" onclick="cycle(5,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="0" oninput="setDate(5,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="1">
+            <button class="step-btn" data-state="0" onclick="cycle(5,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="1" oninput="setDate(5,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="2">
+            <button class="step-btn" data-state="0" onclick="cycle(5,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="2" oninput="setDate(5,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(5,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="3" oninput="setDate(5,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(5,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="4" oninput="setDate(5,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(5,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="5" oninput="setDate(5,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(5,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="6" oninput="setDate(5,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(5,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="5" data-si="7" oninput="setDate(5,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="5" oninput="setRemark(5,this.value)" title="Remark"></textarea>
+        </td>
+      </tr>
+      <tr data-pi="6">
+        <td class="col-product">
+          <div class="prod-idx">#07</div>
+          <div class="prod-name">Skin Barrier Mask Sheet</div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">0%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        </td>
+        
+        <td>
+          <div class="stage-cell " data-si="0">
+            <button class="step-btn" data-state="0" onclick="cycle(6,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="0" oninput="setDate(6,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="1">
+            <button class="step-btn" data-state="0" onclick="cycle(6,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="1" oninput="setDate(6,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="2">
+            <button class="step-btn" data-state="0" onclick="cycle(6,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="2" oninput="setDate(6,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(6,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="3" oninput="setDate(6,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(6,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="4" oninput="setDate(6,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(6,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="5" oninput="setDate(6,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(6,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="6" oninput="setDate(6,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(6,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="6" data-si="7" oninput="setDate(6,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="6" oninput="setRemark(6,this.value)" title="Remark"></textarea>
+        </td>
+      </tr>
+      <tr data-pi="7">
+        <td class="col-product">
+          <div class="prod-idx">#08</div>
+          <div class="prod-name">Exfoliator serum</div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">0%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+        </td>
+        
+        <td>
+          <div class="stage-cell " data-si="0">
+            <button class="step-btn" data-state="0" onclick="cycle(7,0)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="0" oninput="setDate(7,0,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="1">
+            <button class="step-btn" data-state="0" onclick="cycle(7,1)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="1" oninput="setDate(7,1,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="2">
+            <button class="step-btn" data-state="0" onclick="cycle(7,2)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="2" oninput="setDate(7,2,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="3">
+            <button class="step-btn" data-state="0" onclick="cycle(7,3)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="3" oninput="setDate(7,3,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="4">
+            <button class="step-btn" data-state="0" onclick="cycle(7,4)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="4" oninput="setDate(7,4,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="5">
+            <button class="step-btn" data-state="0" onclick="cycle(7,5)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="5" oninput="setDate(7,5,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="6">
+            <button class="step-btn" data-state="0" onclick="cycle(7,6)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="6" oninput="setDate(7,6,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td>
+          <div class="stage-cell " data-si="7">
+            <button class="step-btn" data-state="0" onclick="cycle(7,7)" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10" value="" data-pi="7" data-si="7" oninput="setDate(7,7,this.value)" title="Enter date for this stage">
+          </div>
+        </td>
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="7" oninput="setRemark(7,this.value)" title="Remark"></textarea>
+        </td>
+      </tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal-overlay" id="add-product-modal" onclick="handleModalOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">Add New Product</div>
+    <input class="modal-input" id="new-product-input" type="text" placeholder="Enter product name…" maxlength="80"
+      onkeydown="if(event.key==='Enter')confirmAddProduct(); if(event.key==='Escape')closeAddModal();">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-solid" onclick="confirmAddProduct()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Supabase config ─────────────────────────────────────────────
+const SUPABASE_URL = 'https://eonwoyrfogenymjwluje.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbndveXJmb2dlbnltandsdWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxOTY4NjEsImV4cCI6MjA5Mzc3Mjg2MX0.xG29Xnv0IUAcmfnSspAccxivNoixGtL24jkjvu_b12g';
+const TABLE = 'project_tracker';
+const PROJECT_ID = 'herbea_client2';
+
+async function sbFetch(method, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  return res;
+}
+
+async function sbGet() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${TABLE}?project_id=eq.${PROJECT_ID}&select=*`,
+    {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    }
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return rows.length ? rows[0] : null;
+}
+
+// ── Sync status indicator ────────────────────────────────────────
+function setSyncStatus(status) {
+  // status: 'syncing' | 'ok' | 'error' | 'offline'
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const map = {
+    syncing: { text: '↑ Syncing…',  color: '#FAC775' },
+    ok:      { text: '✓ Saved',      color: '#5DCAA5' },
+    error:   { text: '✕ Sync failed', color: '#E07070' },
+    offline: { text: '⚡ Offline (local only)', color: '#A8A29B' },
+  };
+  const m = map[status] || map.offline;
+  el.textContent = m.text;
+  el.style.color = m.color;
+}
+
+// ── Core data ────────────────────────────────────────────────────
+const _pre={"state":{"0":[0,1,0,0,0,0,0,0,0],"1":[0,0,0,0,0,0,0,0,0],"2":[0,0,0,0,0,0,0,0,0],"3":[0,0,0,0,0,0,0,0,0],"4":[0,0,0,0,0,0,0,0,0],"5":[0,0,0,0,0,0,0,0,0],"6":[0,0,0,0,0,0,0,0,0],"7":[0,0,0,0,0,0,0,0,0],"8":[0,0,0,0,0,0,0,0,0],"9":[0,0,0,0,0,0,0,0,0]},"dates":{"0":["","","","","","","","",""],"1":["","","","","","","","",""],"2":["","","","","","","","",""],"3":["","","","","","","","",""],"4":["","","","","","","","",""],"5":["","","","","","","","",""],"6":["","","","","","","","",""],"7":["","","","","","","","",""],"8":["","","","","","","","",""],"9":["","","","","","","","",""]},"remarks":{"0":"","1":"","2":"","3":"","4":"","5":"","6":"","7":"","8":"","9":""}};
+let state=_pre.state;
+let dates=_pre.dates;
+let remarks=_pre.remarks;
+let saveTimer = null;
+
+let PRODUCTS = _pre.products || [
+  'Cleansing oil',
+  'Gentle cleanser',
+  'Balancing toner',
+  'Hydrating & Barrier repair serum',
+  'Daily Moisturizing Cream',
+  'Sunscreen SPF50+ PA++++',
+  'Skin Barrier Mask Sheet',
+  'Exfoliator serum',
+  'Sun Fluid After Treatment',
+  'Urban Defence EE Cream',
+];
+
+const STAGES = 9;
+const LS_KEY = 'proj_tracker_client2';
+
+function initDefaults() {
+  PRODUCTS.forEach((_, i) => {
+    if (!state[i]) {
+      state[i] = new Array(STAGES).fill(0);
+    } else if (state[i].length === 8) {
+      state[i].splice(5, 0, 0);
+    } else if (state[i].length !== STAGES) {
+      state[i] = new Array(STAGES).fill(0);
+    }
+    if (!dates[i]) {
+      dates[i] = new Array(STAGES).fill('');
+    } else if (dates[i].length === 8) {
+      dates[i].splice(5, 0, '');
+    } else if (dates[i].length !== STAGES) {
+      dates[i] = new Array(STAGES).fill('');
+    }
+    if (remarks[i] === undefined) remarks[i] = '';
+  });
+}
+
+// ── localStorage ─────────────────────────────────────────────────
+function loadLocal() {
+  try {
+    const s = localStorage.getItem(LS_KEY);
+    if (s) {
+      const d = JSON.parse(s);
+      state = d.state || {};
+      dates = d.dates || {};
+      remarks = d.remarks || {};
+      if (d.products && Array.isArray(d.products) && d.products.length > 0) {
+        PRODUCTS = d.products;
+      }
+    }
+  } catch(e) {}
+  initDefaults();
+}
+
+function saveLocal() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ state, dates, remarks, products: PRODUCTS })); } catch(e) {}
+}
+
+// ── Supabase save (debounced 800ms) ──────────────────────────────
+function scheduleSyncToSupabase() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(syncToSupabase, 800);
+}
+
+async function syncToSupabase() {
+  setSyncStatus('syncing');
+  try {
+    const payload = {
+      project_id: PROJECT_ID,
+      state_data: state,
+      dates_data: dates,
+      remarks_data: remarks,
+      products_data: PRODUCTS,
+      updated_at: new Date().toISOString()
+    };
+    const res = await sbFetch('POST', payload);
+    if (res.ok) {
+      setSyncStatus('ok');
+      setTimeout(() => setSyncStatus('ok'), 2000);
+    } else {
+      setSyncStatus('error');
+    }
+  } catch(e) {
+    setSyncStatus('offline');
+  }
+}
+
+// ── Load from Supabase (on startup) ──────────────────────────────
+async function loadFromSupabase() {
+  setSyncStatus('syncing');
+  try {
+    const row = await sbGet();
+    if (row) {
+      state = row.state_data || {};
+      dates = row.dates_data || {};
+      remarks = row.remarks_data || {};
+      if (row.products_data && Array.isArray(row.products_data) && row.products_data.length > 0) {
+        PRODUCTS = row.products_data;
+      }
+      initDefaults();
+      saveLocal(); // sync to localStorage as backup
+      setSyncStatus('ok');
+    } else {
+      // No remote data — use localStorage
+      setSyncStatus('offline');
+    }
+  } catch(e) {
+    setSyncStatus('offline');
+  }
+}
+
+// ── Combined save ────────────────────────────────────────────────
+function save() {
+  saveLocal();
+  scheduleSyncToSupabase();
+}
+
+// ── Actions ──────────────────────────────────────────────────────
+function cycle(pi, si) {
+  state[pi][si] = (state[pi][si] + 1) % 3;
+  save();
+  renderRow(pi);
+  updateStats();
+}
+
+function setDate(pi, si, val) {
+  dates[pi][si] = val;
+  save();
+  const inp = document.querySelector(`input[data-pi="${pi}"][data-si="${si}"]`);
+  if (inp) updateCellTint(inp.closest('.stage-cell'), state[pi][si]);
+}
+
+function setRemark(pi, val) {
+  remarks[pi] = val;
+  save();
+}
+
+function updateCellTint(cell, stateVal) {
+  cell.classList.remove('is-done', 'is-prog');
+  if (stateVal === 2) cell.classList.add('is-done');
+  else if (stateVal === 1) cell.classList.add('is-prog');
+}
+
+async function resetAll() {
+  if (!confirm('Reset all progress and dates? This cannot be undone.')) return;
+  PRODUCTS.forEach((_, i) => { state[i] = new Array(STAGES).fill(0); dates[i] = new Array(STAGES).fill(''); remarks[i] = ''; });
+  save();
+  renderAll();
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function renderRow(pi) {
+  const tr = document.querySelector(`tr[data-pi="${pi}"]`);
+  if (!tr) { renderAll(); return; }
+  const vals = state[pi];
+  const done = vals.filter(v => v === 2).length;
+  const pct = Math.round((done / STAGES) * 100);
+  const pctCell = tr.querySelector('.col-pct');
+  pctCell.innerHTML = `<div class="pct-num">${pct}%</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>`;
+  vals.forEach((v, si) => {
+    const cell = tr.querySelector(`.stage-cell[data-si="${si}"]`);
+    if (!cell) return;
+    cell.querySelector('.step-btn').setAttribute('data-state', v);
+    updateCellTint(cell, v);
+  });
+}
+
+function renderAll() {
+  const tbody = document.getElementById('table-body');
+  let rows = '';
+  PRODUCTS.forEach((name, i) => {
+    const vals = state[i];
+    const ds = dates[i];
+    const done = vals.filter(v => v === 2).length;
+    const pct = Math.round((done / STAGES) * 100);
+    let cells = '';
+    vals.forEach((v, si) => {
+      const tintCls = v === 2 ? 'is-done' : v === 1 ? 'is-prog' : '';
+      const dateVal = ds[si] || '';
+      cells += `
+        <td>
+          <div class="stage-cell ${tintCls}" data-si="${si}">
+            <button class="step-btn" data-state="${v}" onclick="cycle(${i},${si})" title="Click to cycle status"></button>
+            <input class="date-input" type="text" placeholder="MM/DD/YY" maxlength="10"
+              value="${dateVal}" data-pi="${i}" data-si="${si}"
+              oninput="setDate(${i},${si},this.value)" title="Enter date for this stage"/>
+          </div>
+        </td>`;
+    });
+    rows += `
+      <tr data-pi="${i}">
+        <td class="col-product">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div class="prod-idx">#${String(i+1).padStart(2,'0')}</div>
+              <div class="prod-name" id="prod-name-${i}">${esc(name)}</div>
+            </div>
+            <div style="display:flex;gap:3px;flex-shrink:0;">
+              <button class="btn-row-action" onclick="startEditName(${i})" title="Edit name">✎</button>
+              <button class="btn-row-action btn-row-delete" onclick="deleteProduct(${i})" title="Delete product">×</button>
+            </div>
+          </div>
+        </td>
+        <td class="col-pct">
+          <div class="pct-num">${pct}%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        </td>
+        ${cells}
+        <td class="col-remark">
+          <textarea class="remark-input" placeholder="Add remark…" data-pi="${i}"
+            oninput="setRemark(${i},this.value)" title="Remark">${remarks[i] || ''}</textarea>
+        </td>
+      </tr>`;
+  });
+  tbody.innerHTML = rows;
+  updateStats();
+}
+
+function updateStats() {
+  let totalDone = 0, totalProg = 0;
+  PRODUCTS.forEach((_, i) => {
+    totalDone += state[i].filter(v => v === 2).length;
+    totalProg += state[i].filter(v => v === 1).length;
+  });
+  const totalCells = PRODUCTS.length * STAGES;
+  document.getElementById('stat-total').textContent = PRODUCTS.length;
+  document.getElementById('stat-done').textContent = totalDone;
+  document.getElementById('stat-prog').textContent = totalProg;
+  document.getElementById('stat-pct').innerHTML = Math.round((totalDone / totalCells) * 100) + '<sup>%</sup>';
+}
+
+function exportHTML() {
+  let html = document.documentElement.outerHTML;
+  const newPre = `const _pre=${JSON.stringify({state, dates, remarks, products: PRODUCTS})};`;
+  html = html.replace(/const _pre=\{[^<]+\};/, newPre);
+  const blob = new Blob([html], {type: 'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'project_tracker_' + new Date().toISOString().slice(0,10) + '.html';
+  a.click();
+}
+
+// ── HTML escape helper ──────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Add / Delete product ─────────────────────────────────────────
+function openAddModal() {
+  const input = document.getElementById('new-product-input');
+  input.value = '';
+  document.getElementById('add-product-modal').classList.add('open');
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeAddModal() {
+  document.getElementById('add-product-modal').classList.remove('open');
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target === document.getElementById('add-product-modal')) closeAddModal();
+}
+
+function confirmAddProduct() {
+  const input = document.getElementById('new-product-input');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  const pi = PRODUCTS.length;
+  PRODUCTS.push(name);
+  state[pi] = new Array(STAGES).fill(0);
+  dates[pi] = new Array(STAGES).fill('');
+  remarks[pi] = '';
+  save();
+  renderAll();
+  closeAddModal();
+}
+
+function startEditName(pi) {
+  const nameEl = document.getElementById(`prod-name-${pi}`);
+  if (!nameEl || nameEl.tagName === 'INPUT') return;
+  const original = PRODUCTS[pi];
+  const input = document.createElement('input');
+  input.className = 'prod-name-input';
+  input.value = original;
+  nameEl.replaceWith(input);
+  input.focus();
+  input.select();
+  const commit = () => {
+    const newName = input.value.trim() || original;
+    PRODUCTS[pi] = newName;
+    const div = document.createElement('div');
+    div.className = 'prod-name';
+    div.id = `prod-name-${pi}`;
+    div.textContent = newName;
+    input.replaceWith(div);
+    if (newName !== original) save();
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = original; input.blur(); }
+  });
+}
+
+async function manualSave() {
+  const btn = document.getElementById('btn-manual-save');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  await syncToSupabase();
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+}
+
+function deleteProduct(pi) {
+  if (!confirm(`"${PRODUCTS[pi]}" 제품을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  PRODUCTS.splice(pi, 1);
+  const ns = {}, nd = {}, nr = {};
+  PRODUCTS.forEach((_, i) => {
+    const oi = i < pi ? i : i + 1;
+    ns[i] = state[oi]; nd[i] = dates[oi]; nr[i] = remarks[oi];
+  });
+  state = ns; dates = nd; remarks = nr;
+  save();
+  renderAll();
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+const now = new Date();
+document.getElementById('date-label').textContent =
+  'Last updated: ' + now.toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+
+const titleInput = document.getElementById('title-input');
+try {
+  const savedTitle = localStorage.getItem('proj_tracker_client2_title');
+  if (savedTitle) titleInput.value = savedTitle;
+} catch(e) {}
+titleInput.addEventListener('input', () => {
+  try { localStorage.setItem('proj_tracker_client2_title', titleInput.value); } catch(e) {}
+});
+titleInput.addEventListener('keydown', e => { if (e.key === 'Enter') titleInput.blur(); });
+
+// Load local first (instant render), then fetch remote and re-render if newer
+loadLocal();
+renderAll();
+loadFromSupabase().then(() => renderAll());
+</script>
+
+
+</body></html>
